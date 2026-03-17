@@ -1,0 +1,16 @@
+json{
+  "name": "DIET PROJECT",
+  "short_name": "DIET",
+  "start_url": "/NEW-DIET/",
+  "display": "standalone",
+  "background_color": "#181820",
+  "theme_color": "#181820",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
