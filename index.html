@@ -183,6 +183,10 @@ canvas.body-chart{width:100% !important;height:180px !important;}
     <div class="logo-title">DIET<br>PROJECT</div>
     <div class="logo-sub">Made by DJ</div>
   </div>
+  <div style="padding:10px 16px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+    <span style="font-size:12px;color:var(--text2)" id="user-display">이름 미설정</span>
+    <button onclick="document.getElementById('user-modal').classList.add('open')" style="background:var(--gold-bg);border:0.5px solid var(--gold);border-radius:5px;color:var(--gold);font-size:11px;padding:3px 8px;cursor:pointer;">변경</button>
+  </div>
   <div class="nav-group">
     <div class="nav-label">오늘</div>
     <button class="nav-item active" onclick="go('diet',this)"><span class="nav-icon">🍽</span><span class="nav-txt">식단 기록</span></button>
@@ -424,7 +428,25 @@ canvas.body-chart{width:100% !important;height:180px !important;}
 <div class="modal-bg" id="m-oc-ex"><div class="modal" style="max-width:320px"><button class="modal-close" onclick="cm('m-oc-ex')">✕</button><div class="modal-title">운동 원클릭 추가</div><div class="modal-lbl">운동명</div><input class="inp" id="ocex-nm" placeholder="예: 스테어마스터 30분"><div class="msel" id="ocex-tsel" style="margin:8px 0"><button class="msel-btn active" onclick="selOCET(this,'웨이트')">웨이트</button><button class="msel-btn" onclick="selOCET(this,'스쿼시')">스쿼시</button><button class="msel-btn" onclick="selOCET(this,'유산소')">유산소</button></div><div class="mrow"><div style="flex:1"><div class="modal-lbl">무게(kg)</div><input class="inp" id="ocex-wt" type="number" placeholder="0"></div><div style="flex:1"><div class="modal-lbl">세트</div><input class="inp" id="ocex-st" type="number" placeholder="3"></div><div style="flex:1"><div class="modal-lbl">횟수</div><input class="inp" id="ocex-rp" type="number" placeholder="10"></div></div><button class="big-btn" onclick="addOCEx()">추가</button></div></div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzHQShPq9e9Jd5037-ejuGOEM2YxKDOW0ZktzL2tWsTwqrwQXHsxAOThjRNPITjZco-aw/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx0WFjmuF5BjVjylVe4O4JiDg6MSZ9RBqbWs9TVa3xque-IyPnr7kCGabUtDuCw7sSdLw/exec";
+
+// 사용자 이름 관리
+let USER_NAME = localStorage.getItem('dp4_username') || '';
+
+function getUserName() { return USER_NAME; }
+function setUserName(name) {
+  USER_NAME = name;
+  localStorage.setItem('dp4_username', name);
+  document.getElementById('user-display').textContent = name + ' 님';
+  document.getElementById('user-modal').classList.remove('open');
+  // 이름 설정 후 데이터 불러오기
+  setTimeout(async()=>{
+    setSyncStatus('syncing','데이터 불러오는 중...');
+    try { await loadAll(); setSyncStatus('ok','동기화 완료 ✓'); }
+    catch(e) { setSyncStatus('err','오프라인 모드'); }
+  }, 300);
+}
+
 const K={f:'dp4_food',e:'dp4_ex',b:'dp4_body',m:'dp4_meds',ffav:'dp4_ffav',efav:'dp4_efav',wg:'dp4_wg',tgt:'dp4_tgt',ocf:'dp4_ocf',oce:'dp4_oce'};
 const SHEET={f:'food',e:'exercise',b:'body',m:'meds',wg:'body',tgt:'food'};
 const gl=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d===undefined?[]:d));}catch{return d===undefined?[]:d;}};
@@ -450,17 +472,21 @@ function setSyncStatus(status, msg) {
 
 async function pushSheet(sheetName, key) {
   try {
+    const user = getUserName();
+    if(!user) return;
     const payload = gl(key);
     await fetch(SCRIPT_URL, {
       method: 'POST',
-      body: JSON.stringify({action:'save', sheet:sheetName, payload}),
+      body: JSON.stringify({action:'save', sheet:sheetName, user:user, payload}),
     });
   } catch(e) { console.log('push err', e); }
 }
 
 async function pullSheet(sheetName, key) {
   try {
-    const res = await fetch(`${SCRIPT_URL}?sheet=${sheetName}`);
+    const user = getUserName();
+    if(!user) return false;
+    const res = await fetch(`${SCRIPT_URL}?sheet=${sheetName}&user=${encodeURIComponent(user)}`);
     const json = await res.json();
     if(json.status==='ok' && json.data) {
       const parsed = typeof json.data === 'string' ? JSON.parse(json.data) : json.data;
@@ -710,16 +736,41 @@ document.getElementById('med-date').value=td();
 document.getElementById('b-dt').value=td();
 updDose();rdDiet();rdSBwg();genTodayDiag();
 
-// 앱 시작 시 구글 시트에서 데이터 불러오기
+// 앱 시작 시 이름 확인 후 데이터 불러오기
 setTimeout(async()=>{
-  setSyncStatus('syncing','데이터 불러오는 중...');
-  try {
-    await loadAll();
-    setSyncStatus('ok','동기화 완료 ✓');
-  } catch(e) {
-    setSyncStatus('err','오프라인 모드');
+  if(!USER_NAME) {
+    // 이름 없으면 모달 표시
+    document.getElementById('user-modal').classList.add('open');
+    setSyncStatus('err','이름 설정 필요');
+  } else {
+    document.getElementById('user-display').textContent = USER_NAME + ' 님';
+    document.getElementById('username-inp').value = USER_NAME;
+    setSyncStatus('syncing','데이터 불러오는 중...');
+    try {
+      await loadAll();
+      setSyncStatus('ok','동기화 완료 ✓');
+    } catch(e) {
+      setSyncStatus('err','오프라인 모드');
+    }
   }
 }, 500);
 </script>
+
+<!-- 사용자 이름 모달 -->
+<div class="modal-bg" id="user-modal" style="z-index:300">
+  <div class="modal" style="max-width:320px">
+    <div class="modal-title">👤 내 이름 설정</div>
+    <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:14px">
+      이름으로 데이터가 구분 저장돼요.<br>
+      친구들도 각자 이름을 입력하면<br>
+      데이터가 섞이지 않아요! 😊
+    </p>
+    <div class="modal-lbl">이름 입력</div>
+    <input class="inp" id="username-inp" placeholder="예: 동준, 종관, 민규" maxlength="10"
+      onkeydown="if(event.key==='Enter'){const v=document.getElementById('username-inp').value.trim();if(v)setUserName(v);}">
+    <button class="big-btn" onclick="const v=document.getElementById('username-inp').value.trim();if(v)setUserName(v);else alert('이름을 입력해주세요!');">확인</button>
+  </div>
+</div>
+
 </body>
 </html>
