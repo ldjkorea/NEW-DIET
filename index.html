@@ -162,6 +162,15 @@ canvas.body-chart{width:100% !important;height:180px !important;}
 .srch-res{padding:9px 11px;background:var(--bg3);border-radius:6px;margin-bottom:5px;cursor:pointer;display:flex;justify-content:space-between;font-size:13px;color:var(--text);}
 .srch-res:hover{background:var(--gold-bg);color:var(--gold);}
 .srch-sub{font-size:11px;color:var(--text3);}
+.edit-btn{background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px 5px;flex-shrink:0;}
+.edit-btn:hover{color:var(--gold);}
+.manage-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:0.5px solid var(--border);font-size:13px;color:var(--text2);}
+.manage-row:last-child{border-bottom:none;}
+.manage-name{flex:1;}
+.manage-btns{display:flex;gap:4px;}
+.manage-btn{padding:3px 8px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;border:none;}
+.manage-btn.edit{background:var(--gold-bg);color:var(--gold);}
+.manage-btn.del{background:rgba(255,107,107,0.12);color:var(--red);}
 .toast{position:fixed;bottom:20px;right:20px;background:var(--card2);border:0.5px solid var(--gold);border-radius:8px;padding:10px 18px;font-size:13px;color:var(--text);z-index:999;opacity:0;transform:translateY(10px);transition:all .25s;pointer-events:none;}
 .toast.show{opacity:1;transform:translateY(0);}
 @media(max-width:640px){
@@ -227,8 +236,8 @@ canvas.body-chart{width:100% !important;height:180px !important;}
       <div class="stat-card hl"><div class="stat-lbl">남은 칼로리</div><div><span class="stat-val" id="d-rem">1,800</span><span class="stat-unit">kcal</span></div></div>
       <div class="stat-card"><div class="stat-lbl">오늘 식사</div><div><span class="stat-val" id="d-cnt">0</span><span class="stat-unit">끼</span></div></div>
     </div>
-    <div class="panel"><div class="sec-hd"><span class="sec-title">⭐ 즐겨찾기</span><button class="sec-btn" onclick="openFoodM(true)">+ 즐겨찾기 추가</button></div><div class="tag-row" id="fav-tags"><span style="font-size:12px;color:var(--text3)">음식 추가 시 즐겨찾기 체크하면 여기 고정!</span></div></div>
-    <div class="panel"><div class="sec-hd"><span class="sec-title">⚡ 원클릭</span><button class="sec-btn" onclick="openM('m-oc-food')">+ 추가</button></div><div class="tag-row" id="oc-food-tags"></div></div>
+    <div class="panel"><div class="sec-hd"><span class="sec-title">⭐ 즐겨찾기</span><div style="display:flex;gap:6px"><button class="sec-btn" onclick="openFoodM(true)">+ 추가</button><button class="sec-btn" onclick="openManageModal('fav')" style="background:var(--bg3);border-color:var(--border2);color:var(--text2)">관리</button></div></div><div class="tag-row" id="fav-tags"><span style="font-size:12px;color:var(--text3)">음식 추가 시 즐겨찾기 체크하면 여기 고정!</span></div></div>
+    <div class="panel"><div class="sec-hd"><span class="sec-title">⚡ 원클릭</span><div style="display:flex;gap:6px"><button class="sec-btn" onclick="openM('m-oc-food')">+ 추가</button><button class="sec-btn" onclick="openManageModal('oc')" style="background:var(--bg3);border-color:var(--border2);color:var(--text2)">관리</button></div></div><div class="tag-row" id="oc-food-tags"></div></div>
     <div class="panel">
       <div class="sec-hd"><span class="sec-title">🔍 음식 검색 · 직접 입력</span></div>
       <div style="display:flex;gap:8px;margin-bottom:8px"><input class="inp" id="srch-q" placeholder="음식명 검색 (예: 닭가슴살, 위트빅스...)" oninput="srch(this.value,'main')"></div>
@@ -656,7 +665,7 @@ function rdDiet(){
   document.getElementById('d-bar').style.width=pct+'%';
   const meals=['아침','점심','저녁','간식'];
   let html='';
-  meals.forEach(m=>{const mf=foods.filter(f=>f.meal===m);if(!mf.length)return;html+=`<div class="meal-lbl">${MICONS[m]} ${m} · ${Math.round(mf.reduce((a,f)=>a+f.kcal,0))}kcal</div>`;mf.forEach(f=>html+=`<div class="food-row"><div class="food-dot dot-${f.meal}"></div><div style="flex:1"><div class="food-name">${f.name}</div><div class="food-sub">${f.gram?f.gram+'g · ':''}${f.time}</div></div><div class="food-kcal">${Math.round(f.kcal)}kcal</div><button class="del-btn" onclick="delF('${f.id}')">✕</button></div>`);});
+  meals.forEach(m=>{const mf=foods.filter(f=>f.meal===m);if(!mf.length)return;html+=`<div class="meal-lbl">${MICONS[m]} ${m} · ${Math.round(mf.reduce((a,f)=>a+f.kcal,0))}kcal</div>`;mf.forEach(f=>html+=`<div class="food-row"><div class="food-dot dot-${f.meal}"></div><div style="flex:1"><div class="food-name">${f.name}</div><div class="food-sub">${f.gram?f.gram+'g · ':''}${f.time} · ${f.meal}</div></div><div class="food-kcal">${Math.round(f.kcal)}kcal</div><button class="edit-btn" onclick="openEditFoodModal('${f.id}')" title="수정">✎</button><button class="del-btn" onclick="delF('${f.id}')">✕</button></div>`);});
   if(!html)html='<div class="empty-msg">아직 기록된 식단이 없습니다.</div>';
   document.getElementById('food-list').innerHTML=html;
   const favs=gl(K.ffav);
@@ -796,6 +805,131 @@ function expMeds(){const meds=gl(K.m,[]).sort((a,b)=>a.date.localeCompare(b.date
 function expAll(){let txt=`=== DIET PROJECT 전체 데이터 (${td()}) ===\n\n`;const g=gl(K.wg,{});if(g.start)txt+=`체중: 시작 ${g.start}kg / 현재 ${g.cur}kg / 목표 ${g.goal}kg\n\n`;dl('전체데이터.txt',txt);}
 function resetAll(){if(!confirm('정말 모든 데이터를 초기화할까요?'))return;Object.values(K).forEach(k=>localStorage.removeItem(k));toast('초기화 완료');setTimeout(()=>location.reload(),1000);}
 
+
+// ===== 관리 모달 =====
+let manageType = '';
+function openManageModal(type) {
+  manageType = type;
+  const isFav = type === 'fav';
+  document.getElementById('m-manage-title').textContent = isFav ? '⭐ 즐겨찾기 관리' : '⚡ 원클릭 관리';
+  const items = gl(isFav ? K.ffav : K.ocf, []);
+  let html = '';
+  if(!items.length) { html = '<div class="empty-msg">등록된 항목이 없어요</div>'; }
+  else {
+    items.forEach((item, idx) => {
+      const name = item.name || item.name;
+      const kcal = isFav ? Math.round((item.c100||0)*(item.gram||100)/100) : item.kcal;
+      html += `<div class="manage-row">
+        <div class="manage-name">${name} <span style="color:var(--text3);font-size:11px">${kcal}kcal</span></div>
+        <div class="manage-btns">
+          <button class="manage-btn edit" onclick="openEditFav(${idx},'${type}')">수정</button>
+          <button class="manage-btn del" onclick="deleteFavItem(${idx},'${type}')">삭제</button>
+        </div>
+      </div>`;
+    });
+  }
+  document.getElementById('m-manage-list').innerHTML = html;
+  openM('m-manage');
+}
+
+function deleteFavItem(idx, type) {
+  const key = type === 'fav' ? K.ffav : K.ocf;
+  const items = gl(key, []);
+  items.splice(idx, 1);
+  sl(key, items);
+  openManageModal(type);
+  rdDiet();
+  toast('삭제했어요');
+}
+
+function openEditFav(idx, type) {
+  const key = type === 'fav' ? K.ffav : K.ocf;
+  const items = gl(key, []);
+  const item = items[idx];
+  document.getElementById('edit-fav-idx').value = idx;
+  document.getElementById('edit-fav-type').value = type;
+  document.getElementById('edit-fav-title').textContent = type === 'fav' ? '즐겨찾기 수정' : '원클릭 수정';
+  document.getElementById('edit-fav-name').value = item.name;
+  const kcal = type === 'fav' ? Math.round((item.c100||0)*(item.gram||100)/100) : item.kcal;
+  document.getElementById('edit-fav-kcal').value = kcal;
+  const gramWrap = document.getElementById('edit-fav-gram-wrap');
+  if(type === 'fav') { gramWrap.style.display='block'; document.getElementById('edit-fav-gram').value = item.gram||100; }
+  else gramWrap.style.display='none';
+  cm('m-manage');
+  openM('m-edit-fav');
+}
+
+function saveEditFav() {
+  const idx = +document.getElementById('edit-fav-idx').value;
+  const type = document.getElementById('edit-fav-type').value;
+  const key = type === 'fav' ? K.ffav : K.ocf;
+  const items = gl(key, []);
+  const name = document.getElementById('edit-fav-name').value.trim();
+  const kcal = +document.getElementById('edit-fav-kcal').value||0;
+  if(!name) { toast('이름을 입력해주세요'); return; }
+  if(type === 'fav') {
+    const gram = +document.getElementById('edit-fav-gram').value||100;
+    items[idx] = { name, c100: Math.round(kcal/gram*100), gram };
+  } else {
+    items[idx] = { name, kcal };
+  }
+  sl(key, items);
+  cm('m-edit-fav');
+  rdDiet();
+  toast('수정 완료!');
+}
+
+// ===== 식단 기록 수정 =====
+let editFoodC100 = null;
+function openEditFoodModal(id) {
+  const foods = gl(K.f);
+  const food = foods.find(f => f.id === id);
+  if(!food) return;
+  document.getElementById('edit-food-id').value = id;
+  document.getElementById('edit-food-name').value = food.name;
+  document.getElementById('edit-food-gram').value = food.gram || '';
+  document.getElementById('edit-food-kcal').value = food.kcal;
+  document.getElementById('edit-food-time').value = food.time || '';
+  editFoodC100 = food.gram ? Math.round(food.kcal / food.gram * 100) : null;
+  // 시간대 선택
+  const curMealEdit = food.meal || gm();
+  document.getElementById('edit-meal-sel').innerHTML = ['아침','점심','저녁','간식'].map(m =>
+    `<button class="msel-btn ${m===curMealEdit?'active':''}" onclick="selEditMeal(this,'${m}')">${MICONS[m]} ${m}</button>`
+  ).join('');
+  openM('m-edit-food');
+}
+
+function selEditMeal(el, m) {
+  document.querySelectorAll('#edit-meal-sel .msel-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function editAutoKcal() {
+  if(editFoodC100) {
+    const g = +document.getElementById('edit-food-gram').value||0;
+    document.getElementById('edit-food-kcal').value = Math.round(editFoodC100*g/100);
+  }
+}
+
+function saveEditFood() {
+  const id = document.getElementById('edit-food-id').value;
+  const name = document.getElementById('edit-food-name').value.trim();
+  if(!name) { toast('음식명을 입력해주세요'); return; }
+  const gram = +document.getElementById('edit-food-gram').value||null;
+  const kcal = +document.getElementById('edit-food-kcal').value||0;
+  const time = document.getElementById('edit-food-time').value;
+  const activeMeal = document.querySelector('#edit-meal-sel .msel-btn.active');
+  const meal = activeMeal ? activeMeal.textContent.trim().replace(/[🌅☀️🌙🍫]/g,'').trim() : gm();
+  const foods = gl(K.f);
+  const idx = foods.findIndex(f=>f.id===id);
+  if(idx>=0) { foods[idx] = {...foods[idx], name, gram, kcal, time, meal}; }
+  sl(K.f, foods);
+  cm('m-edit-food');
+  rdDiet();
+  scheduleSync();
+  toast('수정 완료!');
+}
+
 function logoutUser() {
   if(!confirm('로그아웃 할까요?')) return;
   USER_NAME = '';
@@ -855,5 +989,53 @@ setTimeout(async()=>{
   </div>
 </div>
 
+
+<!-- 즐겨찾기/원클릭 관리 모달 -->
+<div class="modal-bg" id="m-manage">
+  <div class="modal">
+    <button class="modal-close" onclick="cm('m-manage')">✕</button>
+    <div class="modal-title" id="m-manage-title">관리</div>
+    <div id="m-manage-list"></div>
+  </div>
+</div>
+
+<!-- 음식 수정 모달 -->
+<div class="modal-bg" id="m-edit-food">
+  <div class="modal">
+    <button class="modal-close" onclick="cm('m-edit-food')">✕</button>
+    <div class="modal-title">식단 기록 수정</div>
+    <input type="hidden" id="edit-food-id">
+    <div class="modal-lbl">음식명</div>
+    <input class="inp" id="edit-food-name" placeholder="음식명">
+    <div class="mrow" style="margin-top:8px">
+      <div style="flex:1"><div class="modal-lbl">양 (g)</div><input class="inp" id="edit-food-gram" type="number" placeholder="g" oninput="editAutoKcal()"></div>
+      <div style="flex:1"><div class="modal-lbl">칼로리 (kcal)</div><input class="inp" id="edit-food-kcal" type="number"></div>
+    </div>
+    <div class="modal-lbl">시간대 변경</div>
+    <div class="msel" id="edit-meal-sel"></div>
+    <div class="modal-lbl">시간 수정</div>
+    <input class="inp" id="edit-food-time" type="time">
+    <button class="big-btn" onclick="saveEditFood()">수정 완료</button>
+  </div>
+</div>
+
+<!-- 즐겨찾기 항목 수정 모달 -->
+<div class="modal-bg" id="m-edit-fav">
+  <div class="modal" style="max-width:300px">
+    <button class="modal-close" onclick="cm('m-edit-fav')">✕</button>
+    <div class="modal-title" id="edit-fav-title">항목 수정</div>
+    <input type="hidden" id="edit-fav-idx">
+    <input type="hidden" id="edit-fav-type">
+    <div class="modal-lbl">이름</div>
+    <input class="inp" id="edit-fav-name" placeholder="이름">
+    <div class="modal-lbl">칼로리 (kcal)</div>
+    <input class="inp" id="edit-fav-kcal" type="number">
+    <div id="edit-fav-gram-wrap">
+      <div class="modal-lbl">기본 양 (g)</div>
+      <input class="inp" id="edit-fav-gram" type="number" placeholder="g">
+    </div>
+    <button class="big-btn" onclick="saveEditFav()">수정 완료</button>
+  </div>
+</div>
 </body>
 </html>
